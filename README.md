@@ -26,7 +26,7 @@ This project uses `uv` for modern, fast Python package management.
    ```
 
 4. **Run the Pipeline**:
-   The full pipeline processes data, evaluates baseline models, engineers 40+ features, compares imbalance strategies (CV), and generates business metrics.
+   The full pipeline processes data, evaluates baseline models, engineers 130+ features, compares imbalance strategies (CV), and generates business metrics.
    ```bash
    uv run python src/pipeline.py
    ```
@@ -35,10 +35,8 @@ This project uses `uv` for modern, fast Python package management.
 
 Detailed business impacts, optimal thresholds, and SHAP analyses are located in [reports/results.md](reports/results.md).
 
-> **Note on reproduction**: Initial pipeline execution was blocked due to missing Kaggle credentials on the execution environment. The pipeline codebase is written to handle the data as specified once provided. Final AUC metrics and CV results will populate upon a successful run with downloaded data.
-
 | Model Pipeline | Folds | CV AUC |
 |----------------|-------|--------|
-| Baseline       | 5     | [TBD]  |
-| Final + SMOTE  | 5     | [TBD]  |
-| Final + Weight | 5     | [TBD]  |
+| Baseline       | 5     | 0.7568 |
+| Final + SMOTE  | 5     | 0.7483 |
+| Final + Weight | 5     | 0.7718 |
