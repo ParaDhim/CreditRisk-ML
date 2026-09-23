@@ -1,0 +1,3 @@
+> **Credit Default Risk Model** (GitHub) — Engineered [Blocked by Data Access] applicant-level risk features from raw application, bureau, and payment-history data; trained a LightGBM classifier with stratified 5-fold cross-validation, handling ~[Blocked]% class imbalance via [Blocked — expected weighted loss / SMOTE based on evaluation], reaching **[Blocked] AUC**; built a threshold-based cost analysis translating model scores into approval/decline trade-offs.
+
+*Note: Execution was halted during Step 1 because Kaggle API credentials were not configured in the environment, preventing data download. Per project instructions, results are not fabricated.*
