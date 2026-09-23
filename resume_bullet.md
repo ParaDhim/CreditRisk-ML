@@ -1,1 +1,0 @@
-> **Credit Default Risk Model** (GitHub) — Engineered 139 applicant-level risk features from raw application, bureau, and payment-history data; trained a LightGBM classifier with stratified 5-fold cross-validation, handling ~8% class imbalance via weighted loss, reaching **0.77 AUC**; built a threshold-based cost analysis translating model scores into approval/decline trade-offs.
