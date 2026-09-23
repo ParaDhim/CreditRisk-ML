@@ -32,7 +32,7 @@ To bridge the gap between machine learning and business operations, the model's 
 
 * **The Business Trade-Off**: Operating at a strict **0.30** classification threshold allows the business to mathematically avoid ~87% of all potential eventual defaults, at the steep cost of declining over half the applicant pool. Shifting the risk appetite to **0.50** optimizes revenue flow, approving ~72% of applicants while still efficiently intercepting ~64% of bad debt.
 
-**Key Driving Variables (Feature Gain)**:
+**Key Driving Variables (SHAP)**:
 The model heavily relied on explicit historical behavioral ratios: 
 * `EXT_SOURCES_MEAN`: An arithmetic average of normalized external bureau risk scores.
 * `CREDIT_TO_ANNUITY`: A custom-engineered ratio measuring extreme borrower over-leverage relative to their structured annuity commitments.
