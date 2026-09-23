@@ -8,3 +8,13 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Data files
+data/*.csv
+data/*.zip
+data/*.gz
+data/*.parquet
+
+# Environments and specific logs
+out.log
+.env

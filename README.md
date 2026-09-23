@@ -2,6 +2,7 @@
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![LightGBM](https://img.shields.io/badge/LightGBM-4.6.0-green.svg)](https://lightgbm.readthedocs.io/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Project Status: Active](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 
 An end-to-end, reproducible credit default risk classifier based on the [Home Credit Default Risk dataset](https://www.kaggle.com/c/home-credit-default-risk). This project demonstrates the full lifecycle of an applied Machine Learning project in the Credit Risk domain: from multi-table data aggregation and robust feature engineering, to handling extreme class imbalances, and finally translating statistical outputs into business-actionable threshold strategies.
@@ -99,3 +100,8 @@ CreditRisk-ML/
 |-- pyproject.toml            # Strict uv dependencies map
 \-- resume_bullet.md          # 1-liner ATS-optimized project resume chunk
 ```
+
+---
+
+## License
+This project is open-sourced under the MIT License. See the [LICENSE](LICENSE) file for details.
