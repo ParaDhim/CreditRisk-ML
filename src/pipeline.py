@@ -222,9 +222,6 @@ def business_framing_and_shap(model, X_val, y_val, best_strat):
         # lightgbm native model
         explainer = shap.TreeExplainer(model)
         X_sample = X_val.sample(min(1000, len(X_val)), random_state=42)
-        # handle categories for shap
-        for c in X_sample.select_dtypes(['category']).columns:
-            X_sample[c] = X_sample[c].cat.codes
         shap_values = explainer.shap_values(X_sample)
         # for binary classification lgb gives list of shap_values or numpy array
         if isinstance(shap_values, list):
