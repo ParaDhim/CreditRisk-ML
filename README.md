@@ -56,6 +56,20 @@ Evaluated imbalance strategies head-to-head out-of-fold:
 - **SMOTE Resampling**: Applied strictly within the training folds (to avoid synthetic data leakage into validation).
 - **Weighted Loss (Winner)**: Utilized native algorithmic cost-weighting (`scale_pos_weight`), capturing complex minority structures naturally and achieving the peak **0.7718 AUC**.
 
+### 3. PySpark Port (Installments Features)
+`src/spark_installments.py` reimplements the installments aggregation (`INST_LATE_RATE`, `INST_SHORTFALL_MEAN`) in PySpark and runs it on synthetic data with the same schema as `installments_payments.csv`. It asserts the PySpark output matches the pandas implementation (including null handling), then benchmarks both end-to-end from Parquet. Run with `python src/spark_installments.py 1e6 10e6 50e6 100e6`.
+
+Spark local mode, MacBook Air M2 (16 GB), end-to-end seconds:
+
+| Rows | pandas | PySpark |
+|---|---|---|
+| 1M | 0.09 | 1.00 |
+| 10M | 0.58 | 1.71 |
+| 50M | 4.96 | 6.50 |
+| 100M | 13.56 | 14.24 |
+
+On a single 16 GB machine pandas is as fast or faster at every size tested, since Spark's startup and shuffle overhead only pays off once data exceeds one machine's memory. This is a correctness-validated port of the logic, not a cluster-scale benchmark.
+
 ---
 
 ## Setup & Reproduction Guide
@@ -92,13 +106,13 @@ uv run python src/pipeline.py
 CreditRisk-ML/
 |
 |-- src/
-|   \-- pipeline.py           # Core modeling logic, CV, & Feature Engineering
+|   |-- pipeline.py           # Core modeling logic, CV, & Feature Engineering
+|   \-- spark_installments.py # PySpark port of installments features + benchmark
 |-- data/
 |   \-- README.md             # Dataset instructions & raw CSV dump 
 |-- reports/
 |   \-- results.md            # Deep-dive on thresholds, SHAP, and findings
-|-- pyproject.toml            # Strict uv dependencies map
-\-- resume_bullet.md          # 1-liner ATS-optimized project resume chunk
+\-- pyproject.toml            # Strict uv dependencies map
 ```
 
 ---
