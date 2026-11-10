@@ -1,0 +1,192 @@
+{
+  "n_train": 169130,
+  "n_calib": 46127,
+  "n_holdout": 92254,
+  "base_rate": 0.08072881945686496,
+  "scorecard_features": [
+    "EXT_SOURCES_MEAN",
+    "EXT_SOURCE_3",
+    "EXT_SOURCES_PROD",
+    "DAYS_CREDIT_MEAN",
+    "DAYS_EMPLOYED",
+    "BUREAU_DEBT_RATIO",
+    "OCCUPATION_TYPE",
+    "PREV_APPROVED_RATE",
+    "INST_LATE_RATE",
+    "ORGANIZATION_TYPE",
+    "NAME_EDUCATION_TYPE",
+    "REGION_RATING_CLIENT_W_CITY",
+    "DAYS_LAST_PHONE_CHANGE",
+    "AMT_GOODS_PRICE",
+    "DAYS_ID_PUBLISH",
+    "CODE_GENDER",
+    "FLOORSMAX_AVG",
+    "BB_COUNT_MEAN"
+  ],
+  "model_comparison": [
+    {
+      "model": "Scorecard (WoE + LR)",
+      "auc": 0.74475,
+      "auc_lo": 0.73991,
+      "auc_hi": 0.74954,
+      "gini": 0.48951,
+      "ks": 0.36153,
+      "brier": 0.06882,
+      "brier_skill": 0.07267,
+      "ece": 0.00134,
+      "cal_slope": 0.99238,
+      "cal_intercept": -0.00937,
+      "mean_pred": 0.08027,
+      "observed": 0.08073,
+      "obs_to_exp": 1.00577,
+      "calibration_pass": true
+    },
+    {
+      "model": "LightGBM raw (scale_pos_weight=10)",
+      "auc": 0.77028,
+      "auc_lo": 0.76421,
+      "auc_hi": 0.77421,
+      "gini": 0.54055,
+      "ks": 0.40968,
+      "brier": 0.16267,
+      "brier_skill": -1.19184,
+      "ece": 0.27424,
+      "cal_slope": 0.99966,
+      "cal_intercept": -2.16226,
+      "mean_pred": 0.35497,
+      "observed": 0.08073,
+      "obs_to_exp": 0.22744,
+      "calibration_pass": false
+    },
+    {
+      "model": "LightGBM calibrated (Platt)",
+      "auc": 0.77028,
+      "auc_lo": 0.76421,
+      "auc_hi": 0.77421,
+      "gini": 0.54055,
+      "ks": 0.40968,
+      "brier": 0.06712,
+      "brier_skill": 0.09565,
+      "ece": 0.00296,
+      "cal_slope": 1.01015,
+      "cal_intercept": 0.02052,
+      "mean_pred": 0.08073,
+      "observed": 0.08073,
+      "obs_to_exp": 1.0,
+      "calibration_pass": true
+    },
+    {
+      "model": "LightGBM unweighted",
+      "auc": 0.77088,
+      "auc_lo": 0.76494,
+      "auc_hi": 0.77539,
+      "gini": 0.54177,
+      "ks": 0.40798,
+      "brier": 0.06698,
+      "brier_skill": 0.09745,
+      "ece": 0.00301,
+      "cal_slope": 0.99777,
+      "cal_intercept": 0.01315,
+      "mean_pred": 0.07955,
+      "observed": 0.08073,
+      "obs_to_exp": 1.01494,
+      "calibration_pass": true
+    }
+  ],
+  "profit": {
+    "margin_assumed": 0.1,
+    "lgd_assumed": 0.6,
+    "breakeven_pd": 0.14285714285714288,
+    "optimal": {
+      "threshold": 0.14011241973471683,
+      "approval_rate": 0.8211893251241139,
+      "profit": 3119288467.95,
+      "approve_all_profit": 2623734056.7
+    },
+    "old_rule_0_5_raw": {
+      "threshold": 0.5,
+      "approval_rate": 0.7346998504129902,
+      "defaults_caught": 0.6283566058002148,
+      "bad_rate_approved": 0.04083860782838342,
+      "revenue": 4055551903.3500004,
+      "expected_loss": 1027661814.9,
+      "profit": 3027890088.4500003
+    },
+    "at_breakeven": {
+      "threshold": 0.14285714285714288,
+      "approval_rate": 0.826110520953021,
+      "defaults_caught": 0.4967776584317938,
+      "bad_rate_approved": 0.04917860704351021,
+      "revenue": 4472142276.6,
+      "expected_loss": 1356737453.1,
+      "profit": 3115404823.5000005
+    },
+    "opt_detail": {
+      "threshold": 0.14011241973471683,
+      "approval_rate": 0.8211893251241139,
+      "defaults_caught": 0.5064446831364124,
+      "bad_rate_approved": 0.04852292827160168,
+      "revenue": 4451029485.75,
+      "expected_loss": 1331741017.8,
+      "profit": 3119288467.95
+    }
+  },
+  "psi_scenarios": [
+    {
+      "scenario": "A. random holdout (no drift)",
+      "score_psi": 0.00047,
+      "max_feature_psi": 0.00025,
+      "n_features_shifted": 0,
+      "default_rate": 0.08073,
+      "avg_pred_pd": 0.08073,
+      "obs_to_exp": 1.0,
+      "status": "OK",
+      "reasons": "all indicators within bands"
+    },
+    {
+      "scenario": "B. mild shift: slightly younger",
+      "score_psi": 0.01889,
+      "max_feature_psi": 0.10074,
+      "n_features_shifted": 0,
+      "default_rate": 0.09144,
+      "avg_pred_pd": 0.09164,
+      "obs_to_exp": 0.99789,
+      "status": "OK",
+      "reasons": "all indicators within bands"
+    },
+    {
+      "scenario": "C. moderate: younger + weaker ext. scores",
+      "score_psi": 0.21228,
+      "max_feature_psi": 0.31005,
+      "n_features_shifted": 1,
+      "default_rate": 0.12385,
+      "avg_pred_pd": 0.12235,
+      "obs_to_exp": 1.01227,
+      "status": "INVESTIGATE",
+      "reasons": "score PSI 0.212 in watch band; feature(s) shifted: EXT_SOURCES_MEAN"
+    },
+    {
+      "scenario": "D. large: younger + weaker ext. scores",
+      "score_psi": 0.58378,
+      "max_feature_psi": 0.85787,
+      "n_features_shifted": 5,
+      "default_rate": 0.1557,
+      "avg_pred_pd": 0.15473,
+      "obs_to_exp": 1.00628,
+      "status": "RETRAIN",
+      "reasons": "score PSI 0.584 >= 0.25; 5 top features shifted: EXT_SOURCES_MEAN, EXT_SOURCE_3, EXT_SOURCES_PROD, EXT_SOURCE_2, DAYS_EMPLOYED"
+    }
+  ],
+  "top_features_monitored": [
+    "EXT_SOURCES_MEAN",
+    "CREDIT_TO_ANNUITY",
+    "EXT_SOURCE_3",
+    "INST_LATE_RATE",
+    "EXT_SOURCES_PROD",
+    "EXT_SOURCE_2",
+    "PREV_APPROVED_RATE",
+    "BUREAU_DEBT_RATIO",
+    "AMT_GOODS_PRICE",
+    "DAYS_EMPLOYED"
+  ]
+}

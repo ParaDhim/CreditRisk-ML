@@ -1,0 +1,54 @@
+-- LAYER 3: FEATURES
+-- One row per applicant (SK_ID_CURR). Aggregations per source table, then one wide
+-- model table. Column names match the pandas pipeline in src/pipeline.py.
+CREATE SCHEMA IF NOT EXISTS features;
+
+CREATE OR REPLACE TABLE features.bureau_agg AS
+SELECT
+    SK_ID_CURR,
+    COUNT(SK_ID_BUREAU)                  AS SK_ID_BUREAU_COUNT,
+    AVG(DAYS_CREDIT)                     AS DAYS_CREDIT_MEAN,
+    MIN(DAYS_CREDIT)                     AS DAYS_CREDIT_MIN,
+    AVG(CREDIT_DAY_OVERDUE)              AS CREDIT_DAY_OVERDUE_MEAN,
+    COALESCE(SUM(AMT_CREDIT_SUM), 0)      AS AMT_CREDIT_SUM_SUM,
+    COALESCE(SUM(AMT_CREDIT_SUM_DEBT), 0) AS AMT_CREDIT_SUM_DEBT_SUM,
+    AVG(BB_COUNT)                        AS BB_COUNT_MEAN,
+    COALESCE(SUM(AMT_CREDIT_SUM_DEBT), 0) / (COALESCE(SUM(AMT_CREDIT_SUM), 0) + 1) AS BUREAU_DEBT_RATIO
+FROM cleaned.bureau
+GROUP BY SK_ID_CURR;
+
+CREATE OR REPLACE TABLE features.prev_agg AS
+SELECT
+    SK_ID_CURR,
+    COUNT(SK_ID_PREV)                      AS PREV_COUNT,
+    AVG(AMT_APPLICATION)                   AS PREV_AMT_APP_MEAN,
+    AVG(AMT_CREDIT)                        AS PREV_AMT_CREDIT_MEAN,
+    AVG(COALESCE(IS_APPROVED, 0)::DOUBLE)  AS PREV_APPROVED_RATE
+FROM cleaned.previous_application
+GROUP BY SK_ID_CURR;
+
+CREATE OR REPLACE TABLE features.inst_agg AS
+SELECT
+    SK_ID_CURR,
+    AVG(LATE_PAYMENT::DOUBLE)  AS INST_LATE_RATE,
+    AVG(PAYMENT_SHORTFALL)     AS INST_SHORTFALL_MEAN
+FROM cleaned.installments
+GROUP BY SK_ID_CURR;
+
+CREATE OR REPLACE TABLE features.model_table AS
+SELECT
+    a.*,
+    b.* EXCLUDE (SK_ID_CURR),
+    p.* EXCLUDE (SK_ID_CURR),
+    i.* EXCLUDE (SK_ID_CURR),
+    a.AMT_CREDIT / NULLIF(a.AMT_INCOME_TOTAL, 0)  AS DEBT_TO_INCOME,
+    a.AMT_CREDIT / NULLIF(a.AMT_ANNUITY, 0)       AS CREDIT_TO_ANNUITY,
+    a.DAYS_EMPLOYED / NULLIF(a.DAYS_BIRTH, 0)     AS EMP_TO_AGE_RATIO,
+    a.EXT_SOURCE_1 * a.EXT_SOURCE_2 * a.EXT_SOURCE_3 AS EXT_SOURCES_PROD,
+    (COALESCE(a.EXT_SOURCE_1, 0) + COALESCE(a.EXT_SOURCE_2, 0) + COALESCE(a.EXT_SOURCE_3, 0))
+        / NULLIF((a.EXT_SOURCE_1 IS NOT NULL)::INT + (a.EXT_SOURCE_2 IS NOT NULL)::INT
+                 + (a.EXT_SOURCE_3 IS NOT NULL)::INT, 0) AS EXT_SOURCES_MEAN
+FROM cleaned.application a
+LEFT JOIN features.bureau_agg b USING (SK_ID_CURR)
+LEFT JOIN features.prev_agg   p USING (SK_ID_CURR)
+LEFT JOIN features.inst_agg   i USING (SK_ID_CURR);

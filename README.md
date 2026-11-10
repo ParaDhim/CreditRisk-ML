@@ -10,19 +10,28 @@ An end-to-end, reproducible credit default risk classifier based on the [Home Cr
 ---
 
 ## Executive Summary
-Banks and consumer finance providers rely on predictive models to evaluate an applicant's likelihood of defaulting on a loan. A slight increase in predictive accuracy significantly trims bad debt and boosts overall margin. 
 
-In this project, I:
-1. **Engineered 139 domain-specific features** across 300,000+ applicants using historical credit bureau, installment, and POS-cash records.
-2. **Battled an ~8% class imbalance** by pitting SMOTE oversampling against dynamically weighted loss schemas.
-3. **Achieved a robust 0.77 ROC-AUC** utilizing 5-fold stratified cross-validation on a LightGBM backend.
-4. **Translated the model output** into a business-facing approval/decline cost-analysis table, optimizing expected approval volumes against default capture rates.
+**Finding.** Home Credit applicants can be ranked well enough to matter: the riskiest 10% of applicants default at **28%** against **1.2%** for the safest 10% (GINI 0.54, KS 0.41, AUC 0.77 on a 92k-applicant holdout). An 18-variable WoE scorecard gets most of the way there (GINI 0.49) and is the fallback where a transparent model is required. The original LightGBM probabilities, however, were **not usable as probabilities**: with `scale_pos_weight=10` it predicted a 35% average default rate against a real 8%, so its "0.50 threshold" meant nothing in money terms. After calibration (ECE 0.274 to 0.003) the numbers can be taken at face value.
+
+**Recommendation.** Approve an applicant when the calibrated default probability is below **margin / (margin + loss given default)**, which is **14.3%** under the assumptions below. That approves about 83% of applicants and declines the riskiest ~17%, which hold about half of all defaults. Re-estimate the two inputs before using the number; the best cutoff swings from 5% to 34% as they vary (`reports/figures/threshold_sensitivity.png`).
+
+**Expected impact (under ASSUMED economics: a repaid loan earns 10% of the credit amount, a default loses 60%).** On the holdout, profit rises **+18.7%** versus approving everyone, and **+2.9%** versus the previous "0.50 on raw score" rule. The dataset contains no revenue or loss data, so the percentage depends on those assumptions, not on anything measured.
+
+**Limits you should know about.** The split is random, not out-of-time (no dates in the data). Only previously approved applicants appear in the data, so declined-applicant outcomes are unobserved. Population-drift monitoring is demonstrated on simulated shifts only. Details in [reports/risk_analysis.md](reports/risk_analysis.md).
+
+**Technical summary:**
+1. Engineered 139 features across 300,000+ applicants from bureau, installment, and previous-application records, built both in pandas and as a three-layer DuckDB SQL pipeline (raw, cleaned, features) that matches pandas on all 136 comparable columns.
+2. Compared SMOTE against weighted loss (weighted won), then fixed the weighted model's probabilities with Platt calibration.
+3. Added the standard risk toolkit: WoE/IV scorecard baseline, GINI, KS, lift/gain, decile table, calibration curve and Brier score, cost-based threshold with sensitivity, PSI monitoring with a written retraining rule.
+4. Built a Streamlit dashboard where a threshold slider updates approval rate, defaults caught, and expected loss live.
+
+![Gain and lift](reports/figures/gain_lift.png)
 
 ---
 
 ## Impact & Results
 
-To bridge the gap between machine learning and business operations, the model's raw probabilities were mapped out into a decision matrix:
+To bridge the gap between machine learning and business operations, the model's raw scores were mapped out into a decision matrix. **Note:** these are the *uncalibrated* weighted-model scores from the original last-fold analysis, so a "0.50 threshold" here is not a 50% default probability. See the calibrated, cost-based version in [reports/risk_analysis.md](reports/risk_analysis.md).
 
 | Threshold | Approval Rate (%) | Recall (Defaults Caught %) | Precision (%) |
 |-----------|-------------------|----------------------------|---------------|
@@ -70,6 +79,17 @@ Spark local mode, MacBook Air M2 (16 GB), end-to-end seconds:
 
 On a single 16 GB machine pandas is as fast or faster at every size tested, since Spark's startup and shuffle overhead only pays off once data exceeds one machine's memory. This is a correctness-validated port of the logic, not a cluster-scale benchmark.
 
+### 4. Risk-Analyst Layer
+| Piece | Where |
+|---|---|
+| WoE/IV scorecard vs LightGBM | `src/scorecard.py`, `reports/artifacts/scorecard_points.csv` |
+| GINI, KS, lift/gain, decile table | `src/risk_metrics.py`, `reports/figures/gain_lift.png` |
+| Calibration (curve, Brier, ECE) | `reports/figures/calibration.png` |
+| Cost-based threshold + sensitivity | `src/profit.py` (margin and LGD are labelled assumptions) |
+| PSI monitoring + retraining rule | `src/monitoring.py` (split is simulated: no dates in the data) |
+| DuckDB SQL layers | `sql/01_raw.sql`, `02_cleaned.sql`, `03_features.sql`, `src/sql_features.py` |
+| Dashboard | `app/dashboard.py` |
+
 ---
 
 ## Setup & Reproduction Guide
@@ -95,8 +115,17 @@ source .venv/bin/activate
 kaggle competitions download -c home-credit-default-risk -p data
 unzip data/home-credit-default-risk.zip -d data/
 
-# 4. Spin up the ML Training & Generation Pipeline
+# 4. Original ML pipeline (CV, imbalance comparison, SHAP)
 uv run python src/pipeline.py
+
+# 5. Build DuckDB layers + feature table (add --parity to check against pandas)
+uv run python src/sql_features.py
+
+# 6. Scorecard, metrics, calibration, thresholds, PSI -> reports/
+uv run python src/run_upgrade.py
+
+# 7. Dashboard (reads reports/artifacts, no raw data needed)
+uv run streamlit run app/dashboard.py
 ```
 
 ---
@@ -104,15 +133,24 @@ uv run python src/pipeline.py
 ## Repository Structure
 ```
 CreditRisk-ML/
-|
 |-- src/
-|   |-- pipeline.py           # Core modeling logic, CV, & Feature Engineering
+|   |-- pipeline.py           # Original modeling logic, CV, & feature engineering
+|   |-- sql_features.py       # Runs the DuckDB layers, exports features, pandas parity check
+|   |-- run_upgrade.py        # Scorecard, metrics, calibration, profit, PSI -> reports/
+|   |-- scorecard.py          # WoE binning, IV, logistic scorecard, points
+|   |-- risk_metrics.py       # GINI, KS, lift/gain, deciles, calibration
+|   |-- profit.py             # Cost-based threshold (assumption-labelled)
+|   |-- monitoring.py         # PSI + retraining rule
 |   \-- spark_installments.py # PySpark port of installments features + benchmark
-|-- data/
-|   \-- README.md             # Dataset instructions & raw CSV dump 
+|-- sql/                      # 01_raw, 02_cleaned, 03_features
+|-- app/dashboard.py          # Streamlit threshold explorer
+|-- data/README.md            # Dataset instructions
 |-- reports/
-|   \-- results.md            # Deep-dive on thresholds, SHAP, and findings
-\-- pyproject.toml            # Strict uv dependencies map
+|   |-- results.md            # Original threshold/SHAP write-up
+|   |-- risk_analysis.md      # Scorecard, calibration, profit, PSI write-up
+|   |-- figures/              # Charts
+|   \-- artifacts/            # Tables, holdout scores (dashboard input)
+\-- pyproject.toml            # uv dependency map
 ```
 
 ---

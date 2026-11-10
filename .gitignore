@@ -18,3 +18,7 @@ data/*.parquet
 # Environments and specific logs
 out.log
 .env
+
+# DuckDB database + derived feature table
+data/*.duckdb
+data/*.duckdb.wal

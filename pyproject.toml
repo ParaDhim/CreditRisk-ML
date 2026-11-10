@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
+    "duckdb>=1.4.5",
     "imbalanced-learn>=0.12.4",
     "kaggle>=1.7.4.5",
     "kagglehub>=0.3.13",
@@ -12,6 +13,9 @@ dependencies = [
     "matplotlib>=3.9.4",
     "numpy>=2.0.2",
     "pandas>=2.3.3",
+    "pyarrow>=21.0.0",
     "scikit-learn>=1.6.1",
+    "scipy>=1.13.1",
     "shap>=0.49.1",
+    "streamlit>=1.50.0",
 ]
